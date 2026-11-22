@@ -91,15 +91,15 @@ nav a[aria-current] { text-decoration: underline; text-underline-offset: 4px; }
     </nav>
 
     <main class="content">
-      <section id="work" data-page hidden>
+      <section id="page-work" data-page hidden>
         <div class="grid" id="grid"></div>
       </section>
 
-      <section id="about" data-page hidden>
+      <section id="page-about" data-page hidden>
         <div class="text"><p>Your bio goes here.</p></div>
       </section>
 
-      <section id="contact" data-page hidden>
+      <section id="page-contact" data-page hidden>
         <div class="text"><p>you@example.com</p></div>
       </section>
     </main>
@@ -135,10 +135,14 @@ const navEl = document.getElementById("nav");
 const scroller = document.getElementById("scroller");
 const root = document.documentElement;
 
-/* Centre name + links together, and set the vanishing line just under the name */
+/* Where the name + links sit, as a fraction of screen height (measured to their middle).
+   0.5 = dead centre, 0.17 = middle of the top third. */
+const POSITION = 0.17;
+
+/* Place name + links together, and set the vanishing line just under the name */
 function layout() {
   const nameH = nameEl.offsetHeight, navH = navEl.offsetHeight, gap = 12;
-  const top = Math.round((window.innerHeight - (nameH + gap + navH)) / 2);
+  const top = Math.max(16, Math.round(window.innerHeight * POSITION - (nameH + gap + navH) / 2));
   nameEl.style.top = top + "px";
   root.style.setProperty("--cut", (top + nameH) + "px");
 }
@@ -179,7 +183,7 @@ navEl.addEventListener("click", e => {
 /* Switch sections without reloading anything */
 function route() {
   const id = location.hash.slice(1);
-  document.querySelectorAll("[data-page]").forEach(p => p.hidden = p.id !== id);
+  document.querySelectorAll("[data-page]").forEach(p => p.hidden = p.id !== "page-" + id);
   navEl.querySelectorAll("a").forEach(a =>
     a.getAttribute("href") === "#" + id ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
   scroller.scrollTop = 0;
