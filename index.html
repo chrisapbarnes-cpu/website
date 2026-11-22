@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chris Preston Barnes</title>
+<link rel="preload" as="image" href="home.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500&display=swap">
+<style>
+/* ---------- SETTINGS ---------- */
+:root {
+  --image: url("home.jpg");  /* background image: put home.jpg next to this file */
+  --text: #ffffff;           /* text colour */
+  --font: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --cut: 50vh;               /* set automatically: the line under your name where things vanish */
+}
+
+/* ---------- PAGE ---------- */
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; }  /* the page itself never scrolls */
+body { font-family: var(--font); color: var(--text); background: #222; }
+a { color: inherit; text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: 4px; }
+a:focus-visible, button:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+[hidden] { display: none !important; }
+
+/* Background: its own fixed layer, never moves or redraws */
+.bg {
+  position: fixed; inset: 0; z-index: 0;
+  background: #222 var(--image) center / cover no-repeat;
+}
+
+/* Your name: the only thing that stays put */
+.name {
+  position: fixed; left: 0; right: 0; top: 40vh; z-index: 2;
+  margin: 0; padding: 0 16px; text-align: center;
+  font-weight: 500; font-size: clamp(28px, 5vw, 52px); line-height: 1.1;
+  text-shadow: 0 1px 12px rgba(0,0,0,.45);
+  pointer-events: none;
+}
+.name a { pointer-events: auto; }
+
+/* Everything else scrolls in here, and is hidden above the line under your name */
+.scroller {
+  position: fixed; inset: 0; z-index: 1;
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
+  -webkit-mask-image: linear-gradient(to bottom, transparent var(--cut), #000 calc(var(--cut) + 1px));
+          mask-image: linear-gradient(to bottom, transparent var(--cut), #000 calc(var(--cut) + 1px));
+}
+.inner { padding: calc(var(--cut) + 12px) 16px 40vh; }  /* set automatically */
+
+nav { display: grid; justify-items: center; gap: 4px; font-size: clamp(16px, 1.6vw, 20px); text-shadow: 0 1px 12px rgba(0,0,0,.45); }
+nav a[aria-current] { text-decoration: underline; text-underline-offset: 4px; }
+
+.content { margin-top: 40px; }
+
+/* Work thumbnails */
+.grid { display: grid; gap: 24px; width: min(100%, 720px); margin: 0 auto; }
+.film { all: unset; cursor: pointer; display: block; aspect-ratio: 16 / 9; overflow: hidden; background: #111; }
+.film img { width: 100%; height: 100%; object-fit: cover; display: block; transition: opacity .3s; }
+.film:hover img { opacity: .85; }
+.film:focus-visible { outline: 2px solid var(--text); outline-offset: 4px; }
+
+/* About / Contact text */
+.text { width: min(100%, 560px); margin: 0 auto; text-align: center; font-size: 18px; line-height: 1.6; text-shadow: 0 1px 12px rgba(0,0,0,.45); }
+.text p { margin: 0 0 1em; }
+
+/* Video player */
+.lightbox { position: fixed; inset: 0; z-index: 10; background: rgba(10,10,10,.95); display: grid; place-items: center; padding: 16px; }
+.player { width: min(100%, 1280px, calc((100vh - 100px) * 16 / 9)); aspect-ratio: 16 / 9; }
+.player iframe { width: 100%; height: 100%; border: 0; }
+.close { position: absolute; top: 16px; right: 16px; background: none; border: 0; color: #fff; font: inherit; cursor: pointer; padding: 8px; }
+
+@media (prefers-reduced-motion: reduce) { .film img { transition: none; } }
+</style>
+</head>
+<body>
+
+<div class="bg" aria-hidden="true"></div>
+
+<h1 class="name" id="name"><a href="#">Chris Preston Barnes</a></h1>
+
+<div class="scroller" id="scroller">
+  <div class="inner" id="inner">
+    <nav id="nav">
+      <a href="#work">Work</a>
+      <a href="#about">About</a>
+      <a href="#contact">Contact</a>
+    </nav>
+
+    <main class="content">
+      <section id="work" data-page hidden>
+        <div class="grid" id="grid"></div>
+      </section>
+
+      <section id="about" data-page hidden>
+        <div class="text"><p>Your bio goes here.</p></div>
+      </section>
+
+      <section id="contact" data-page hidden>
+        <div class="text"><p>you@example.com</p></div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<div class="lightbox" id="lightbox" hidden role="dialog" aria-modal="true" aria-label="Video player">
+  <button class="close" id="close">Close ✕</button>
+  <div class="player" id="player"></div>
+</div>
+
+<script>
+/* ---------- YOUR VIDEOS ----------
+   One line per video, in order. Use the bit after youtu.be/ (before any "?"). */
+const VIDEOS = [
+  "1ugrmRwsKbs",
+  "jJjwRb0QzVM",
+  "9b4s3kuv38Q",
+  "sdWTOLCprf8",
+  "Sx7W52_Y6ZY",
+  "QE6ZDPNTqVg",
+  "XJJBz66PUSw",
+  "90L70GTO6Zg",
+  "Xc2YtlclC2o",
+];
+
+/* ---------- no need to edit below ---------- */
+const nameEl = document.getElementById("name");
+const navEl = document.getElementById("nav");
+const scroller = document.getElementById("scroller");
+const root = document.documentElement;
+
+/* Centre name + links together, and set the vanishing line just under the name */
+function layout() {
+  const nameH = nameEl.offsetHeight, navH = navEl.offsetHeight, gap = 12;
+  const top = Math.round((window.innerHeight - (nameH + gap + navH)) / 2);
+  nameEl.style.top = top + "px";
+  root.style.setProperty("--cut", (top + nameH) + "px");
+}
+layout();
+window.addEventListener("resize", layout);
+if (document.fonts) document.fonts.ready.then(layout);
+
+/* Thumbnails */
+const grid = document.getElementById("grid");
+const lb = document.getElementById("lightbox");
+VIDEOS.forEach(id => {
+  const b = document.createElement("button");
+  b.className = "film";
+  b.setAttribute("aria-label", "Play video");
+  b.innerHTML = `<img loading="lazy" alt="" src="https://i.ytimg.com/vi/${id}/maxresdefault.jpg"
+    onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/${id}/hqdefault.jpg'">`;
+  b.onclick = e => {
+    if (e.clientY && e.clientY < nameEl.getBoundingClientRect().bottom) return; // ignore clicks on the hidden part
+    document.getElementById("player").innerHTML =
+      `<iframe src="https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen title="Video"></iframe>`;
+    lb.hidden = false;
+  };
+  grid.appendChild(b);
+});
+
+/* Player */
+function closePlayer() { lb.hidden = true; document.getElementById("player").innerHTML = ""; }
+document.getElementById("close").onclick = closePlayer;
+lb.onclick = e => { if (e.target === lb) closePlayer(); };
+document.addEventListener("keydown", e => { if (e.key === "Escape") closePlayer(); });
+
+/* Ignore clicks on links that have scrolled out of sight */
+navEl.addEventListener("click", e => {
+  if (e.clientY && e.clientY < nameEl.getBoundingClientRect().bottom) e.preventDefault();
+});
+
+/* Switch sections without reloading anything */
+function route() {
+  const id = location.hash.slice(1);
+  document.querySelectorAll("[data-page]").forEach(p => p.hidden = p.id !== id);
+  navEl.querySelectorAll("a").forEach(a =>
+    a.getAttribute("href") === "#" + id ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
+  scroller.scrollTop = 0;
+}
+window.addEventListener("hashchange", route);
+route();
+</script>
+</body>
+</html>
