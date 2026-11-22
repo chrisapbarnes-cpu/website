@@ -151,7 +151,8 @@ VIDEOS.forEach(id => {
   b.className = "film";
   b.setAttribute("aria-label", "Play video");
   b.innerHTML = `<img loading="lazy" alt="" src="https://i.ytimg.com/vi/${id}/maxresdefault.jpg"
-    onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/${id}/hqdefault.jpg'">`;
+    onload="if(this.naturalWidth<=120&&!this.dataset.fb){this.dataset.fb=1;this.src='https://i.ytimg.com/vi/${id}/hqdefault.jpg'}"
+    onerror="if(!this.dataset.fb){this.dataset.fb=1;this.src='https://i.ytimg.com/vi/${id}/hqdefault.jpg'}">`;
   b.onclick = e => {
     if (e.clientY && e.clientY < nameEl.getBoundingClientRect().bottom) return; // ignore clicks on the hidden part
     document.getElementById("player").innerHTML =
